@@ -16,18 +16,9 @@ export class BackendStack extends Stack {
     super(scope, id, props);
     const imageStoreBucketName = 'id-veriff-image-store';
 
-    const s3Bucket = new Bucket(this, 'IdVeriffImageStore', {
-      bucketName: imageStoreBucketName,
-      encryption: BucketEncryption.S3_MANAGED
-    });
+    const s3Bucket = this.createS3Bucket(imageStoreBucketName);
 
-    const idVeriffMetadataTable = new Table(this, 'id-verification-metadata', {
-      partitionKey: { name: 'userId', type: AttributeType.STRING },
-      pointInTimeRecovery: true,
-      encryption: TableEncryption.AWS_MANAGED,
-      tableName: 'id-verification-metadata',
-    });
-
+    const idVeriffMetadataTable = this.createMetadataTable();
 
     const veriffApi = new RestApi(this, 'id-veriff', {
       description: 'id-veriff-image-upload',
@@ -43,7 +34,7 @@ export class BackendStack extends Stack {
     const getUserStatusFunction = new Function(this, 'getUserStatusFunction', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'getUserStatus.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'get-user-status',
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName
@@ -68,7 +59,7 @@ export class BackendStack extends Stack {
     const updateUserStatusFunction = new Function(this, 'updateUserStatusFunction', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'updateUserStatus.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'update-user-status',
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName
@@ -94,7 +85,7 @@ export class BackendStack extends Stack {
     const deleteUserDataFunction = new Function(this, 'deleteUserDataFunction', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'deleteUserData.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'delete-user-data',
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName,
@@ -136,7 +127,7 @@ export class BackendStack extends Stack {
     const idUploadFunction = new Function(this, 'Function', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'storeImage.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'id-upload',
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName
@@ -233,7 +224,7 @@ export class BackendStack extends Stack {
     const userImageFaceValidation = new Function(this, 'user-image-face-validation', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'userImageFaceValidation.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'user-image-face-validation',
       environment: {
         S3_BUCKET: imageStoreBucketName
@@ -272,7 +263,7 @@ export class BackendStack extends Stack {
     const userDocumentImageValidation = new Function(this, 'user-document-image-validation', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'userDocumentImageValidation.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'user-document-image-validation',
       environment: {
         S3_BUCKET: imageStoreBucketName
@@ -310,7 +301,7 @@ export class BackendStack extends Stack {
     const idFaceVerificationFunction = new Function(this, 'id-face-verification', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'idFaceVerification.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'id-face-verification',
       environment: {
         S3_BUCKET: imageStoreBucketName
@@ -348,7 +339,7 @@ export class BackendStack extends Stack {
     const sendOutNotificationFunction = new Function(this, 'sendUserNotification', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'sendOutNotification.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'send-user-notification',
       environment: {
         SQS_URL: sendNotificationsQueue.queueUrl
@@ -370,7 +361,7 @@ export class BackendStack extends Stack {
     const cleanUpResourcesFunction = new Function(this, 'clearnUpResourcesFunction', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'cleanUpResources.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'clean-up-resources',
       environment: {
         SQS_URL: sendNotificationsQueue.queueUrl
@@ -447,7 +438,7 @@ export class BackendStack extends Stack {
     const storedImagesQueueConsumerFunction = new Function(this, 'stored-queue-lambda-consumer', {
       runtime: Runtime.NODEJS_14_X,
       handler: 'imageVerificationConsumer.handler',
-      code: Code.fromAsset(path.join(__dirname, 'lambda-handler')),
+      code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'stored-image-consumer',
       environment: {
         STATEMACHINE_ARN: statemachine.stateMachineArn
@@ -471,5 +462,21 @@ export class BackendStack extends Stack {
 
     const eventSource = new SqsEventSource(storedImagesQueue);
     storedImagesQueueConsumerFunction.addEventSource(eventSource);
+  }
+
+  private createMetadataTable() {
+    return new Table(this, 'id-verification-metadata', {
+      partitionKey: { name: 'userId', type: AttributeType.STRING },
+      pointInTimeRecovery: true,
+      encryption: TableEncryption.AWS_MANAGED,
+      tableName: 'id-verification-metadata',
+    });
+  }
+
+  private createS3Bucket(imageStoreBucketName: string) {
+    return new Bucket(this, 'IdVeriffImageStore', {
+      bucketName: imageStoreBucketName,
+      encryption: BucketEncryption.S3_MANAGED
+    });
   }
 }
