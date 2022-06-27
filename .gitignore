@@ -1,0 +1,4 @@
+node_modules
+lib/lambda-handler/node_modules/*
+.cdk.staging
+cdk.out
