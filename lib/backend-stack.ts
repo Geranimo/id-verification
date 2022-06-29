@@ -14,6 +14,9 @@ import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks';
 export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+
+    // new HelloWorld(this, 'hello-world');
+
     const imageStoreBucketName = 'id-veriff-image-store';
 
     const s3Bucket = this.createS3Bucket(imageStoreBucketName);
