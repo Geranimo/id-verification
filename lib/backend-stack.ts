@@ -58,6 +58,17 @@ export class BackendStack extends Stack {
         ],
       effect: Effect.ALLOW
     }))
+    getUserStatusFunction.addToRolePolicy(new PolicyStatement({
+      actions: [
+        'xray:PutTraceSegments',
+        'xray:PutTelemetryRecords',
+      ],
+      resources:
+        [
+          '*'
+        ],
+      effect: Effect.ALLOW
+    }))
 
     const updateUserStatusFunction = new Function(this, 'updateUserStatusFunction', {
       runtime: Runtime.NODEJS_14_X,
@@ -139,6 +150,17 @@ export class BackendStack extends Stack {
 
     idUploadFunction.addToRolePolicy(new PolicyStatement({
       actions: [
+        'xray:PutTraceSegments',
+        'xray:PutTelemetryRecords',
+      ],
+      resources:
+        [
+          '*'
+        ],
+      effect: Effect.ALLOW
+    }))
+    idUploadFunction.addToRolePolicy(new PolicyStatement({
+      actions: [
         's3:ListBucket',
         's3:PutObject',
       ],
@@ -148,6 +170,7 @@ export class BackendStack extends Stack {
         ],
       effect: Effect.ALLOW
     }))
+
 
     const idUploadLambdaIntegration: LambdaIntegration = new LambdaIntegration(idUploadFunction);
     idupload.addMethod('POST', idUploadLambdaIntegration, {
