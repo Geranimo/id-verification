@@ -3,7 +3,7 @@ import { Stack, StackProps } from 'aws-cdk-lib';
 import { Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
 import { Table, AttributeType, TableEncryption } from 'aws-cdk-lib/aws-dynamodb';
 import { AuthorizationType, LambdaIntegration, RestApi, Cors } from 'aws-cdk-lib/aws-apigateway';
-import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
+import { Function, Runtime, Code, Tracing } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
@@ -39,6 +39,7 @@ export class BackendStack extends Stack {
       handler: 'getUserStatus.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'get-user-status',
+      tracing: Tracing.ACTIVE,
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName
       }
@@ -75,6 +76,7 @@ export class BackendStack extends Stack {
       handler: 'updateUserStatus.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'update-user-status',
+      tracing: Tracing.ACTIVE,
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName
       }
@@ -101,6 +103,7 @@ export class BackendStack extends Stack {
       handler: 'deleteUserData.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'delete-user-data',
+      tracing: Tracing.ACTIVE,
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName,
         BUCKET_NAME: s3Bucket.bucketName
@@ -143,6 +146,7 @@ export class BackendStack extends Stack {
       handler: 'storeImage.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/storageImageService/api')),
       functionName: 'id-upload',
+      tracing: Tracing.ACTIVE,
       environment: {
         METADATA_TABLE_NAME: idVeriffMetadataTable.tableName
       }
@@ -252,6 +256,7 @@ export class BackendStack extends Stack {
       handler: 'userImageFaceValidation.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'user-image-face-validation',
+      tracing: Tracing.ACTIVE,
       environment: {
         S3_BUCKET: imageStoreBucketName
       }
@@ -291,6 +296,7 @@ export class BackendStack extends Stack {
       handler: 'userDocumentImageValidation.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'user-document-image-validation',
+      tracing: Tracing.ACTIVE,
       environment: {
         S3_BUCKET: imageStoreBucketName
       }
@@ -329,6 +335,7 @@ export class BackendStack extends Stack {
       handler: 'idFaceVerification.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'id-face-verification',
+      tracing: Tracing.ACTIVE,
       environment: {
         S3_BUCKET: imageStoreBucketName
       }
@@ -367,6 +374,7 @@ export class BackendStack extends Stack {
       handler: 'sendOutNotification.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'send-user-notification',
+      tracing: Tracing.ACTIVE,
       environment: {
         SQS_URL: sendNotificationsQueue.queueUrl
       }
@@ -389,6 +397,7 @@ export class BackendStack extends Stack {
       handler: 'cleanUpResources.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'clean-up-resources',
+      tracing: Tracing.ACTIVE,
       environment: {
         SQS_URL: sendNotificationsQueue.queueUrl
       }
@@ -466,6 +475,7 @@ export class BackendStack extends Stack {
       handler: 'imageVerificationConsumer.handler',
       code: Code.fromAsset(path.join(__dirname, 'lambda-handler/verificationService')),
       functionName: 'stored-image-consumer',
+      tracing: Tracing.ACTIVE,
       environment: {
         STATEMACHINE_ARN: statemachine.stateMachineArn
       }
